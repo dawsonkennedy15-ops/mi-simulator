@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MI Practice Simulator — NHC Florida</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --t50:#f0fafa;--t100:#ccf0f0;--t200:#99e0e0;--t400:#2abcbc;--t500:#1a9999;--t600:#137a7a;--t700:#0d5c5c;
+  --s50:#faf8f5;--s100:#f2ede6;--s200:#e5ddd0;--wg:#6b6560;--dk:#1c1917;
+  --green:#16a34a;--amber:#d97706;--rose:#e11d48;
+  --rsm:8px;--rmd:14px;--sh1:0 1px 3px rgba(0,0,0,.08);--sh2:0 4px 16px rgba(0,0,0,.10);--sh3:0 12px 40px rgba(0,0,0,.13)
+}
+html,body{height:100%}
+body{font-family:'DM Sans',sans-serif;background:var(--s50);color:var(--dk);min-height:100vh}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--t200);border-radius:10px}
+
+/* HEADER */
+.hdr{background:var(--t700);color:#fff;padding:13px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--sh2)}
+.hdr h1{font-family:'DM Serif Display',serif;font-size:1.2rem;display:flex;align-items:center;gap:10px}
+.badge{font-family:'DM Sans',sans-serif;font-size:.62rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;background:rgba(255,255,255,.18);padding:3px 10px;border-radius:20px}
+.btn-ghost{background:transparent;color:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.2);padding:6px 14px;border-radius:var(--rsm);font-family:'DM Sans',sans-serif;font-size:.82rem;cursor:pointer;transition:all .2s}
+.btn-ghost:hover{color:#fff;background:rgba(255,255,255,.1)}
+.btn-p{background:var(--t600);color:#fff;border:none;padding:12px 28px;border-radius:var(--rsm);font-family:'DM Sans',sans-serif;font-size:.92rem;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:8px}
+.btn-p:hover{background:var(--t700);transform:translateY(-1px);box-shadow:var(--sh2)}
+.btn-p:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-s{background:#fff;color:var(--t700);border:2px solid var(--t200);padding:10px 22px;border-radius:var(--rsm);font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-s:hover{border-color:var(--t400);background:var(--t50)}
+
+/* SCENARIO SELECT */
+.sel-wrap{max-width:960px;margin:0 auto;padding:40px 24px}
+.sel-wrap h2{font-family:'DM Serif Display',serif;font-size:2rem;color:var(--t700);margin-bottom:6px}
+.sel-sub{color:var(--wg);font-size:.92rem;margin-bottom:32px;line-height:1.65}
+.sg{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-bottom:32px}
+.sc{background:#fff;border-radius:var(--rmd);padding:20px;border:2px solid transparent;cursor:pointer;transition:all .2s;box-shadow:var(--sh1);position:relative;overflow:hidden}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--t400);opacity:0;transition:opacity .2s}
+.sc:hover{border-color:var(--t200);box-shadow:var(--sh2);transform:translateY(-2px)}
+.sc:hover::before,.sc.sel::before{opacity:1}
+.sc.sel{border-color:var(--t500);box-shadow:var(--sh2)}
+.sc-n{font-family:'DM Serif Display',serif;font-size:1.2rem;color:var(--t700);margin-bottom:2px}
+.sc-m{font-size:.72rem;color:var(--wg);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:9px}
+.sc-d{font-size:.86rem;color:#3a3a3a;line-height:1.55}
+.sc-t{display:inline-block;margin-top:12px;font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:20px;background:var(--t50);color:var(--t600);border:1px solid var(--t100)}
+
+/* ── BRIEFING SCREEN ── */
+.brief-wrap{max-width:780px;margin:0 auto;padding:40px 24px 60px}
+.brief-program-bar{background:var(--t700);border-radius:var(--rmd) var(--rmd) 0 0;padding:16px 24px;display:flex;align-items:center;gap:14px}
+.brief-program-bar .prog-icon{width:40px;height:40px;background:rgba(255,255,255,.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.brief-program-bar .prog-title{color:#fff}
+.brief-program-bar .prog-title strong{display:block;font-family:'DM Serif Display',serif;font-size:1.05rem}
+.brief-program-bar .prog-title span{font-size:.75rem;opacity:.8}
+.brief-card{background:#fff;border-radius:0 0 var(--rmd) var(--rmd);border:1px solid var(--s200);border-top:none;box-shadow:var(--sh3);overflow:hidden;margin-bottom:20px}
+.brief-role-header{background:var(--t50);padding:20px 24px;border-bottom:1px solid var(--t100);display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.brief-role-title{font-family:'DM Serif Display',serif;font-size:1.5rem;color:var(--t700);margin-bottom:3px}
+.brief-role-sub{font-size:.82rem;color:var(--wg)}
+.brief-role-badge{background:var(--t600);color:#fff;padding:5px 14px;border-radius:20px;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;align-self:flex-start;margin-top:4px}
+.brief-body{padding:24px}
+.brief-section{margin-bottom:22px}
+.brief-section:last-child{margin-bottom:0}
+.brief-section-label{font-size:.68rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--t600);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.brief-section-label svg{opacity:.7}
+.brief-section-text{font-size:.9rem;line-height:1.7;color:#333}
+.brief-goals{display:flex;flex-direction:column;gap:7px}
+.brief-goal{display:flex;align-items:flex-start;gap:10px;background:var(--s50);border:1px solid var(--s200);border-radius:var(--rsm);padding:10px 13px;font-size:.87rem;line-height:1.55}
+.brief-goal-icon{color:var(--t500);flex-shrink:0;margin-top:1px;font-size:.9rem}
+.brief-participant-preview{background:var(--s50);border:1px solid var(--s200);border-left:4px solid var(--t400);border-radius:var(--rsm);padding:14px 16px}
+.brief-participant-name{font-family:'DM Serif Display',serif;font-size:1.1rem;color:var(--t700);margin-bottom:3px}
+.brief-participant-meta{font-size:.75rem;color:var(--wg);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+.brief-participant-desc{font-size:.87rem;line-height:1.6;color:#333}
+.brief-context-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chip{background:#fff;border:1px solid var(--s200);border-radius:20px;padding:4px 12px;font-size:.75rem;color:var(--wg);font-weight:500}
+.chip.teal{background:var(--t50);border-color:var(--t100);color:var(--t700)}
+.brief-reminder{background:linear-gradient(135deg,var(--t700),var(--t600));color:#fff;border-radius:var(--rsm);padding:14px 18px;font-size:.85rem;line-height:1.65;margin-bottom:20px}
+.brief-reminder strong{display:block;font-family:'DM Serif Display',serif;font-size:.95rem;margin-bottom:4px;opacity:.9}
+.brief-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+
+/* SIM LAYOUT */
+.sim-outer{display:flex;flex-direction:column;height:calc(100vh - 50px)}
+.bnr{background:#fff;border-bottom:1px solid var(--s200);padding:11px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;flex-shrink:0}
+.bnr-l{display:flex;align-items:center;gap:13px}
+.av{width:42px;height:42px;border-radius:50%;background:var(--t600);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'DM Serif Display',serif;font-size:1.05rem;flex-shrink:0}
+.pn{font-family:'DM Serif Display',serif;font-size:1rem;color:var(--t700)}
+.ps{font-size:.77rem;color:var(--wg)}
+.bnr-r{display:flex;align-items:center;gap:10px}
+.edots{display:flex;gap:4px}
+.ed{width:8px;height:8px;border-radius:50%;background:var(--t100);transition:background .3s}
+.ed.done{background:var(--t500)}
+.btn-end{background:transparent;color:var(--wg);border:1px solid var(--s200);padding:5px 13px;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.78rem;cursor:pointer;transition:all .2s}
+.btn-end:hover{background:var(--s100)}
+.sim-body{flex:1;display:grid;grid-template-columns:1fr 300px 264px;overflow:hidden}
+@media(max-width:1080px){.sim-body{grid-template-columns:1fr 280px}#notes-col{display:none}}
+@media(max-width:720px){.sim-body{grid-template-columns:1fr}#right-col{display:none}}
+
+/* CHAT */
+.chat-col{display:flex;flex-direction:column;background:var(--s50);border-right:1px solid var(--s200);overflow:hidden}
+#msgs{flex:1;overflow-y:auto;padding:18px 16px;display:flex;flex-direction:column;gap:11px}
+.msg{display:flex;max-width:85%;animation:fu .3s ease}
+.msg.participant{align-self:flex-start;flex-direction:column}
+.msg.member{align-self:flex-end;align-items:flex-end;flex-direction:column}
+@keyframes fu{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+.mlbl{font-size:.67rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--wg);margin-bottom:3px}
+.msg.member .mlbl{text-align:right;color:var(--t500)}
+.bbl{padding:10px 15px;font-size:.88rem;line-height:1.62;border-radius:var(--rmd)}
+.msg.participant .bbl{background:#fff;border:1px solid var(--s200);border-radius:var(--rmd) var(--rmd) var(--rmd) 4px;box-shadow:var(--sh1)}
+.msg.member .bbl{background:var(--t600);color:#fff;border-radius:var(--rmd) var(--rmd) 4px var(--rmd)}
+.typing-row{align-self:flex-start;flex-direction:column;display:flex;animation:fu .3s ease}
+.typing{display:flex;gap:5px;padding:12px 14px;background:#fff;border:1px solid var(--s200);border-radius:var(--rmd) var(--rmd) var(--rmd) 4px;width:fit-content;box-shadow:var(--sh1)}
+.td{width:7px;height:7px;background:var(--t400);border-radius:50%;animation:bnc 1.2s infinite}
+.td:nth-child(2){animation-delay:.2s}.td:nth-child(3){animation-delay:.4s}
+@keyframes bnc{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+#err-bar{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;border-radius:var(--rsm);padding:8px 13px;font-size:.81rem;margin:0 13px 8px;display:none}
+.inp-row{background:#fff;border-top:1px solid var(--s200);padding:11px 13px;display:flex;gap:8px;align-items:flex-end}
+.inp-row textarea{flex:1;border:1.5px solid var(--s200);border-radius:var(--rsm);padding:9px 12px;font-family:'DM Sans',sans-serif;font-size:.88rem;resize:none;min-height:42px;max-height:110px;background:var(--s50);transition:border-color .2s;line-height:1.5}
+.inp-row textarea:focus{outline:none;border-color:var(--t400);background:#fff}
+.snd{background:var(--t600);color:#fff;border:none;width:40px;height:40px;border-radius:var(--rsm);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.snd:hover{background:var(--t700)}.snd:disabled{opacity:.4;cursor:not-allowed}
+
+/* RIGHT PANEL */
+#right-col{background:#fff;border-right:1px solid var(--s200);overflow-y:auto;display:flex;flex-direction:column}
+.psec{padding:13px 15px;border-bottom:1px solid var(--s100)}
+.psec h4{font-size:.67rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--wg);margin-bottom:9px}
+.cbox{background:var(--t50);border:1px solid var(--t100);border-left:4px solid var(--t400);border-radius:var(--rsm);padding:11px 13px;font-size:.81rem;line-height:1.65;animation:fu .4s ease}
+.ctag2{font-size:.63rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--t600);margin-bottom:6px;display:block}
+.ec{font-size:.79rem;color:var(--wg);line-height:1.6}
+
+/* MY ROLE PANEL inside sim */
+.role-panel-content{font-size:.79rem;line-height:1.65;color:#333}
+.rp-field{margin-bottom:10px}
+.rp-label{font-size:.63rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t600);margin-bottom:3px}
+.rp-value{font-size:.82rem;line-height:1.6;color:var(--dk)}
+.rp-goal{display:flex;gap:7px;align-items:flex-start;margin-bottom:5px;font-size:.79rem;line-height:1.55}
+.rp-goal-dot{width:6px;height:6px;border-radius:50%;background:var(--t400);flex-shrink:0;margin-top:6px}
+
+.rtog{width:100%;text-align:left;background:none;border:none;padding:8px 0;font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:700;color:var(--t600);cursor:pointer;display:flex;align-items:center;gap:6px}
+.rbody{font-size:.76rem;line-height:1.6;color:#444;margin-top:4px}
+.rg{margin-bottom:11px}
+.rg>b{display:block;color:var(--t700);font-size:.7rem;letter-spacing:.05em;text-transform:uppercase;margin-bottom:4px}
+.rpills{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
+.pill{background:var(--t50);color:var(--t700);border:1px solid var(--t100);border-radius:20px;padding:2px 9px;font-size:.7rem;font-weight:500}
+.pill.w{background:#fff7ed;border-color:#fed7aa;color:#9a3412}
+.rem-sec p{font-size:.78rem;color:#555;line-height:1.65;margin-bottom:7px}
+
+/* NOTES COL */
+#notes-col{background:var(--s50);display:flex;flex-direction:column;overflow:hidden}
+.nhdr{padding:13px 14px 10px;border-bottom:1px solid var(--s200);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.nhdr h4{font-size:.67rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--wg)}
+.nhdr span{font-size:.71rem;color:var(--t500)}
+#notes-list{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:7px}
+.ncard{background:#fff;border:1px solid var(--s200);border-radius:var(--rsm);padding:9px 11px;font-size:.79rem;line-height:1.55;box-shadow:var(--sh1);animation:fu .3s ease}
+.ntime{font-size:.65rem;color:var(--wg);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
+.nph{font-size:.79rem;color:var(--wg);line-height:1.65;text-align:center;padding:20px 8px}
+.ninp{padding:10px;border-top:1px solid var(--s200);background:#fff;display:flex;flex-direction:column;gap:6px;flex-shrink:0}
+.ninp textarea{width:100%;border:1.5px solid var(--s200);border-radius:var(--rsm);padding:8px 11px;font-family:'DM Sans',sans-serif;font-size:.81rem;resize:none;height:60px;background:var(--s50);line-height:1.5;transition:border-color .2s}
+.ninp textarea:focus{outline:none;border-color:var(--t400);background:#fff}
+.nbtns{display:flex;justify-content:flex-end;gap:6px}
+.btn-n{background:var(--t600);color:#fff;border:none;padding:5px 13px;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.76rem;font-weight:600;cursor:pointer;transition:background .2s}
+.btn-n:hover{background:var(--t700)}
+.btn-n.clr{background:transparent;color:var(--wg);border:1px solid var(--s200)}
+.btn-n.clr:hover{background:var(--s100)}
+
+/* SUMMARY */
+.sum-page{max-width:1000px;margin:0 auto;padding:40px 24px 60px}
+.sum-page h2{font-family:'DM Serif Display',serif;font-size:1.9rem;color:var(--t700);margin-bottom:6px}
+.tot{background:var(--t700);color:#fff;border-radius:var(--rmd);padding:20px 24px;display:flex;align-items:center;gap:20px;margin:22px 0 16px}
+.bignum{font-family:'DM Serif Display',serif;font-size:3.5rem;line-height:1}
+.slabel{font-family:'DM Serif Display',serif;font-size:1.15rem;margin-bottom:4px}
+.sdesc{font-size:.83rem;opacity:.85;line-height:1.55}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:22px}
+.scard{background:#fff;border-radius:var(--rmd);padding:13px;box-shadow:var(--sh1);border:1px solid var(--s200)}
+.sclbl{font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--wg);margin-bottom:5px}
+.scnum{font-family:'DM Serif Display',serif;font-size:1.5rem}
+.scnum span{font-size:.85rem;color:var(--wg)}
+.sbar{height:7px;background:var(--s100);border-radius:4px;overflow:hidden;margin-top:5px}
+.sfill{height:100%;border-radius:4px;transition:width 1s ease}
+.voice{background:var(--s50);border:1px solid var(--s200);border-left:4px solid var(--t400);border-radius:var(--rsm);padding:16px 18px 16px 26px;font-style:italic;font-size:.9rem;line-height:1.7;color:#4a4a4a;margin:20px 0;position:relative}
+.voice::before{content:'"';font-family:'DM Serif Display',serif;font-size:3rem;color:var(--t200);position:absolute;top:-8px;left:10px;line-height:1}
+.sum-sec-title{font-family:'DM Serif Display',serif;font-size:1rem;color:var(--t700);margin-bottom:8px;margin-top:20px}
+.tip{display:flex;gap:10px;align-items:flex-start;background:#fff;border:1px solid var(--s200);border-radius:var(--rsm);padding:11px 13px;margin-bottom:8px;font-size:.84rem;line-height:1.55;box-shadow:var(--sh1)}
+.nsum-list{background:#fff;border:1px solid var(--s200);border-radius:var(--rmd);overflow:hidden;box-shadow:var(--sh1)}
+.nsi{padding:10px 14px;border-bottom:1px solid var(--s100);font-size:.82rem;line-height:1.55}
+.nsi:last-child{border-bottom:none}
+.nsit{font-size:.65rem;color:var(--wg);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
+/* REVIEW */
+.review-section{margin-top:36px}
+.review-toggle-btn{width:100%;background:#fff;border:2px solid var(--t200);border-radius:var(--rmd);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif}
+.review-toggle-btn:hover{border-color:var(--t400);background:var(--t50)}
+.rtb-left{display:flex;align-items:center;gap:12px}
+.rtb-icon{width:36px;height:36px;background:var(--t50);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+.rtb-title{font-family:'DM Serif Display',serif;font-size:1.05rem;color:var(--t700)}
+.rtb-sub{font-size:.75rem;color:var(--wg);margin-top:1px}
+.rtb-arr{font-size:1rem;color:var(--t500);transition:transform .3s}
+.review-toggle-btn.open .rtb-arr{transform:rotate(180deg)}
+.review-body{margin-top:12px;display:none;animation:fu .3s ease}
+.review-body.open{display:block}
+.log-layout{display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start}
+@media(max-width:760px){.log-layout{grid-template-columns:1fr}}
+.log-chat{background:#fff;border:1px solid var(--s200);border-radius:var(--rmd);overflow:hidden;box-shadow:var(--sh1)}
+.log-chat-header{background:var(--t700);color:#fff;padding:11px 16px;font-size:.75rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase}
+.log-messages{padding:16px;display:flex;flex-direction:column;gap:10px;max-height:620px;overflow-y:auto}
+.log-msg{display:flex;flex-direction:column;max-width:88%}
+.log-msg.participant{align-self:flex-start}
+.log-msg.member{align-self:flex-end;align-items:flex-end}
+.log-lbl{font-size:.65rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--wg);margin-bottom:3px}
+.log-msg.member .log-lbl{color:var(--t500)}
+.log-bubble{padding:9px 13px;font-size:.84rem;line-height:1.6;border-radius:var(--rmd)}
+.log-msg.participant .log-bubble{background:var(--s50);border:1px solid var(--s200);border-radius:var(--rmd) var(--rmd) var(--rmd) 4px}
+.log-msg.member .log-bubble{background:var(--t600);color:#fff;border-radius:var(--rmd) var(--rmd) 4px var(--rmd)}
+.log-coaching{align-self:stretch;margin:4px 0}
+.log-coaching-inner{background:var(--t50);border:1px solid var(--t100);border-left:3px solid var(--t400);border-radius:var(--rsm);padding:10px 13px;font-size:.78rem;line-height:1.62}
+.log-coaching-label{font-size:.62rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--t600);margin-bottom:5px}
+.log-sidebar{display:flex;flex-direction:column;gap:10px}
+.log-sidebar-hdr{font-size:.7rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--wg);margin-bottom:2px}
+.lnc{background:#fff;border:1px solid var(--s200);border-radius:var(--rsm);padding:11px 13px;box-shadow:var(--sh1)}
+.lnc-label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--wg);margin-bottom:4px}
+.lnc-text{font-size:.81rem;line-height:1.6}
+.lnc.cn{border-left:3px solid var(--t400)}
+.lnc.mn{border-left:3px solid var(--amber)}
+.lnc .lnc-label.my{color:var(--amber)}
+.sum-acts{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
+/* OVERLAY */
+.overlay{position:fixed;inset:0;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;z-index:200;flex-direction:column;gap:12px}
+.spinner{width:34px;height:34px;border:3px solid var(--t100);border-top-color:var(--t500);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.overlay p{color:var(--wg);font-size:.88rem}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <h1>MI Practice Simulator <span class="badge">NHC Florida</span></h1>
+  <button class="btn-ghost" id="btn-back" style="display:none" onclick="goBack()">← Back</button>
+</div>
+
+<!-- SCENARIO SELECT -->
+<div id="screen-select">
+  <div class="sel-wrap">
+    <h2>Choose a Participant</h2>
+    <p class="sel-sub">Each scenario places you in a community health role. Select a participant to see your full role briefing before the session begins.</p>
+    <div class="sg" id="sg"></div>
+    <button class="btn-p" id="btn-start" disabled onclick="goToBriefing()">
+      View Role Briefing for <span id="sname">...</span> →
+    </button>
+  </div>
+</div>
+
+<!-- BRIEFING SCREEN -->
+<div id="screen-brief" style="display:none">
+  <div class="brief-wrap">
+    <div id="brief-content"></div>
+  </div>
+</div>
+
+<!-- SIM -->
+<div id="screen-sim" style="display:none">
+  <div class="sim-outer">
+    <div class="bnr">
+      <div class="bnr-l">
+        <div class="av" id="p-av">?</div>
+        <div>
+          <div class="pn" id="p-name">—</div>
+          <div class="ps" id="p-sub">—</div>
+        </div>
+      </div>
+      <div class="bnr-r">
+        <div class="edots" id="edots"></div>
+        <button class="btn-end" onclick="endSession()">End Session</button>
+      </div>
+    </div>
+    <div class="sim-body">
+      <!-- CHAT -->
+      <div class="chat-col">
+        <div id="msgs"></div>
+        <div id="err-bar"></div>
+        <div class="inp-row">
+          <textarea id="msg-in" placeholder="What do you say?" rows="1"
+            onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+          <button class="snd" id="snd-btn" onclick="sendMsg()">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+      </div>
+      <!-- RIGHT PANEL -->
+      <div id="right-col">
+        <!-- MY ROLE (collapsible) -->
+        <div class="psec">
+          <button class="rtog" onclick="togglePanel('role-body','role-arr')"><span id="role-arr">▸</span> My Role</button>
+          <div id="role-body" style="display:none" class="role-panel-content"></div>
+        </div>
+        <!-- COACHING -->
+        <div class="psec">
+          <h4>Coaching Notes</h4>
+          <div id="coaching"><p class="ec">Coaching notes appear here after every couple of exchanges.</p></div>
+        </div>
+        <!-- MI REF -->
+        <div class="psec">
+          <button class="rtog" onclick="togglePanel('ref-body','ref-arr')"><span id="ref-arr">▸</span> MI Quick Reference</button>
+          <div id="ref-body" style="display:none" class="rbody">
+            <div class="rg"><b>OARS</b>
+              <p style="margin-bottom:5px"><strong style="color:var(--t700)">Open Questions:</strong> Invite more than yes/no. <em>"What matters most to you about this?"</em></p>
+              <p style="margin-bottom:5px"><strong style="color:var(--t700)">Affirmations:</strong> Name real strengths. <em>"You've been carrying a lot."</em></p>
+              <p style="margin-bottom:5px"><strong style="color:var(--t700)">Reflections:</strong> Reflect back — simple, complex, double-sided.</p>
+              <p><strong style="color:var(--t700)">Summaries:</strong> Collect and link. Powerful for gathering change talk.</p>
+            </div>
+            <div class="rg"><b>Change Talk — DARN-CAT</b>
+              <div class="rpills"><span class="pill">Desire</span><span class="pill">Ability</span><span class="pill">Reasons</span><span class="pill">Need</span><span class="pill">Commitment</span><span class="pill">Activation</span><span class="pill">Taking Steps</span></div>
+            </div>
+            <div class="rg"><b>MI Traps to Avoid</b>
+              <div class="rpills"><span class="pill w">Expert Trap</span><span class="pill w">Righting Reflex</span><span class="pill w">Assessment Trap</span><span class="pill w">Premature Focus</span><span class="pill w">Labeling</span><span class="pill w">Chat Trap</span></div>
+            </div>
+          </div>
+        </div>
+        <!-- REMINDERS -->
+        <div class="psec rem-sec" style="flex:1">
+          <h4>Remember</h4>
+          <p>🎯 Resistance is information — not a problem to solve.</p>
+          <p>💬 Reflections are more powerful than questions.</p>
+          <p>✨ Every moment of change talk is worth affirming.</p>
+          <p>🤝 Your job is to draw out their reasons — not provide yours.</p>
+        </div>
+      </div>
+      <!-- NOTES -->
+      <div id="notes-col">
+        <div class="nhdr">
+          <h4>📝 My Notes</h4>
+          <span id="ncnt">0 notes</span>
+        </div>
+        <div id="notes-list">
+          <p class="nph">Jot observations, things to try, or moments you noticed.</p>
+        </div>
+        <div class="ninp">
+          <textarea id="note-ta" placeholder="e.g. 'I jumped to advice — try a reflection instead'"></textarea>
+          <div class="nbtns">
+            <button class="btn-n clr" onclick="document.getElementById('note-ta').value=''">Clear</button>
+            <button class="btn-n" onclick="addNote()">Add Note</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SUMMARY -->
+<div id="screen-sum" style="display:none">
+  <div class="sum-page" id="sum-content"></div>
+</div>
+
+<!-- OVERLAY -->
+<div class="overlay" id="overlay" style="display:none">
+  <div class="spinner"></div>
+  <p id="ov-txt">Thinking...</p>
+</div>
+
+<script>
+const SCENARIOS = [
+  {
+    id: 'marcus', name: 'Marcus', age: 42, initials: 'MA',
+    tag: 'Type 2 Diabetes · Diet Change', difficulty: 'Moderate',
+    desc: "Knows he needs to change his diet but feels overwhelmed and skeptical. He's heard the advice before — from everyone.",
+    opening: "Hey. So... they told me I had to come talk to somebody about my diabetes. I been managing it fine, I think. I mean — as fine as I can.",
+    briefing: {
+      roleTitle: 'Health Navigator',
+      program: 'National Health Corps (NHC) Florida',
+      setting: 'Northeast Florida Healthy Start Coalition, Duval County',
+      yourRole: `You are a Health Navigator at a community health outreach site in Jacksonville, working to connect underserved community members to preventive health resources, health education, and chronic disease support. Motivational Interviewing is a core skill in your role — it helps you meet people where they are rather than telling them what to do.`,
+      programContext: `As a Health Navigator, you are not a clinician — you are a bridge. Your job is to build trust, explore readiness to change, and connect people to the care and resources they need. MI is the primary tool you use in one-on-one health conversations.`,
+      whyThisConversation: `Marcus was referred to your navigator services by his primary care provider after his last A1C came back elevated. His doctor flagged him as needing additional lifestyle support — but Marcus hasn't engaged with any of the previous referrals. You're reaching out for an initial check-in, with the goal of understanding where he's at — not pushing a plan on him.`,
+      yourGoals: [
+        'Build enough rapport that Marcus feels safe being honest with you',
+        'Understand what Marcus already knows and what barriers he faces',
+        'Explore his ambivalence about change without pushing your agenda',
+        'Listen for any change talk — even small — and reflect it back',
+        'Leave him feeling heard, not lectured'
+      ],
+      watchFor: 'Marcus has likely been lectured by medical providers before. If you sound like a doctor telling him what to do, he will shut down. Your advantage is that you are NOT his doctor — use that.',
+      difficulty: 'Moderate — good for building foundational MI skills'
+    },
+    system: `You are Marcus, a 42-year-old Black man with Type 2 diabetes in Jacksonville, FL. Two jobs, tired all the time. Know you need to change your diet but nothing has stuck. Defensive because doctors lecture you. Not hostile — just worn out and skeptical.
+PERSONALITY: Guarded but not mean. Humor as deflection. Say "I know, I know" a lot. Not in denial — just don't believe change is realistic.
+CHANGE TALK (earn it): "I do want to be around for my kids." "Sometimes I think about cutting back on soda." "I used to eat better before everything got busy."
+SUSTAIN TALK: "Hard when working doubles." "Can't afford to eat healthy." "Doctor tells me what not to eat — nobody tells me what to eat instead." "I've tried. It doesn't last."
+RULES: Short-medium replies. Do NOT change quickly. More closed if lectured. Small openings if reflected well. Never break character. Under 80 words.`
+  },
+  {
+    id: 'diane', name: 'Diane', age: 58, initials: 'DI',
+    tag: 'Hypertension · Medication Resistance', difficulty: 'Challenging',
+    desc: "Recently diagnosed with hypertension. Resistant to medication and convinced stress reduction alone will fix it.",
+    opening: "Hello. I appreciate you seeing me, but I want to be upfront — I'm really here because my doctor insisted. I honestly feel like I have a handle on my blood pressure situation.",
+    briefing: {
+      roleTitle: 'Health Educator',
+      program: 'National Health Corps (NHC) Florida',
+      setting: 'Community Health Education Program, Duval County',
+      yourRole: `You are a Health Educator at a community health education program in Jacksonville, working alongside clinical staff to provide patient education and health coaching support. Your MI training prepares you to have honest, non-coercive conversations with patients who may be resistant to medical recommendations — without overstepping your scope as a health educator.`,
+      programContext: `As a Health Educator, you serve as a trusted, community-embedded resource. You are not here to override a doctor's advice or persuade Diane to take medication. You are here to understand her perspective, explore her concerns, and help her feel informed enough to make her own decision. That distinction matters enormously in how you show up.`,
+      whyThisConversation: `Diane's cardiologist referred her to navigator services after her last appointment. She agreed to come — under pressure from her doctor — but has made clear she doesn't think medication is necessary. Your goal is not to convince her otherwise. It's to understand what she believes, what she's afraid of, and what, if anything, she might be willing to explore.`,
+      yourGoals: [
+        'Respect her autonomy completely — she is an educated adult making her own choices',
+        'Get curious about her concerns rather than countering them',
+        'Avoid triggering her defensiveness by taking a "I know better" stance',
+        'Explore any ambivalence gently — especially fears about the risks she already knows',
+        'Help her feel that this is a conversation, not a referral to be managed'
+      ],
+      watchFor: "Diane responds very poorly to being corrected or talked down to. She is highly educated and will push back hard if she feels you're dismissing her research. Your job is to be genuinely curious — not strategically curious as a way to convince her.",
+      difficulty: 'Challenging — requires strong reflective listening and resistance to the righting reflex'
+    },
+    system: `You are Diane, 58, recently diagnosed with high blood pressure in Jacksonville. Retired school administrator — sharp, articulate, very resistant to medication. Believe stress is manageable with yoga and herbal tea.
+PERSONALITY: Polite but firm. Condescending at times. Done your research. NOT stupid, just convinced.
+CHANGE TALK (rare): "I get worried when I see those numbers." "I suppose I could ask about the actual risks." "My sister had a stroke, which scared me."
+SUSTAIN TALK: "Medication has side effects." "I'm managing my stress." "Don't want to be dependent on a pill." "I know my body."
+RULES: MORE resistant if lectured. Small openings only when navigator shows genuine curiosity. Under 80 words. Never break character.`
+  },
+  {
+    id: 'jordan', name: 'Jordan', age: 26, initials: 'JO',
+    tag: 'Alcohol Use · Off-Topic Referral', difficulty: 'Advanced',
+    desc: "Came in for housing assistance. Friendly but deflects health questions. Minimizes alcohol use.",
+    opening: "Oh hey! Yeah, I'm Jordan. I was just talking to Keisha about my housing thing — is this like related to that? Because that's kinda the main thing I need help with right now.",
+    briefing: {
+      roleTitle: 'Care Coordinator',
+      program: 'National Health Corps (NHC) Florida',
+      setting: 'Housing and Social Services Navigation Site, Duval County',
+      yourRole: `You are a Care Coordinator embedded at a social services navigation site in Jacksonville that provides housing case management, benefits enrollment, and wraparound support. Your role bridges housing and health — you're part of the same team as the housing case managers, but your focus is on health needs that often surface alongside housing instability. You use MI in brief, often unplanned conversations with clients who didn't come to talk about health.`,
+      programContext: `Care Coordinators at social service sites are trained to gently integrate health conversations into encounters that start as something else — without being deceptive or derailing the primary need. Jordan came for housing help. That matters, and you won't ignore it. But you also have permission to explore health if it comes up naturally.`,
+      whyThisConversation: `Jordan was flagged by Keisha, their housing case manager, because she's noticed signs of concern over several appointments — fatigue, some mentions of drinking, missed appointments. She asked you to connect with Jordan informally today. Jordan doesn't know the reason for the handoff. You are NOT here to confront Jordan or deliver a diagnosis. You're here to get to know them and see if health comes up organically.`,
+      yourGoals: [
+        'Honor why Jordan actually came — help with housing remains valid and primary',
+        'Build genuine warmth and connection before anything health-related comes up',
+        'Follow Jordan\'s lead — if they deflect health topics, don\'t force it',
+        'If an opening appears, reflect it without pouncing on it',
+        'Leave Jordan feeling like you\'re on their side — not managing them'
+      ],
+      watchFor: "Jordan is very good at being likable while sharing nothing real. If you push on health directly, they'll charm their way past it and you'll lose the opening. The skill here is patience — let the conversation breathe.",
+      difficulty: 'Advanced — requires comfort with ambiguity, deflection, and not forcing the health agenda'
+    },
+    system: `You are Jordan, 26, referred by housing case manager. Came for housing — NOT health. Drink a lot (most nights) but minimize it. Likable, chatty — talk about anything except health.
+PERSONALITY: Warm, funny, talkative. Good at seeming open. Change subjects. Self-deprecating. Quietly uncomfortable when pressed.
+CHANGE TALK (very rare): "I have been waking up pretty rough lately." "My roommate said something once." "I used to run. I miss that."
+SUSTAIN TALK: "Just stressed about housing." "Everyone drinks." "I can stop whenever."
+RULES: Deflect, humor, redirect to housing. Close up if forced. Small openings if gently circled back to. Under 80 words.`
+  },
+  {
+    id: 'tanya', name: 'Ms. Tanya', age: 67, initials: 'MT',
+    tag: 'Caregiver Burnout · Self-Neglect', difficulty: 'Emotionally Complex',
+    desc: "Full-time caregiver for her husband with dementia. Exhausted and feels guilty when the conversation turns to her health.",
+    opening: "Mm. Hello. I can't stay long — I've got to get back to my husband. He can't be left too long. What is it you wanted to talk about?",
+    briefing: {
+      roleTitle: 'Care Coordinator',
+      program: 'National Health Corps (NHC) Florida',
+      setting: 'Healthy Start Coalition — Caregiver Outreach Program, Duval County',
+      yourRole: `You are a Care Coordinator serving within a caregiver support initiative at the Northeast Florida Healthy Start Coalition. Your caseload includes informal family caregivers — spouses, adult children, and others providing unpaid care to aging or chronically ill family members. You use MI to help caregivers recognize their own health needs and connect to support, in a population that almost universally puts themselves last.`,
+      programContext: `Caregiver health is a recognized public health priority in Duval County. Care Coordinators work to identify caregiver burnout early and help connect caregivers to respite care, self-care resources, and their own medical follow-up. This work requires exceptional sensitivity — caregivers often feel that any focus on themselves is a betrayal of the person they're caring for. Your job is to gently challenge that frame.`,
+      whyThisConversation: `Ms. Tanya was referred to navigator services by her husband's neurologist, who noticed during a recent visit that she appeared exhausted and disclosed she hadn't seen her own doctor in over two years. She agreed to the referral reluctantly — she sees it as another thing on her plate. You are not here to tell her she needs to take better care of herself. You are here to understand what her life looks like right now.`,
+      yourGoals: [
+        'Create enough space that she feels she doesn\'t have to perform strength for you',
+        'Follow her lead on how much she\'s willing to talk about herself',
+        'Validate the weight of what she\'s carrying without making it worse',
+        'Gently explore what "taking care of yourself" would even mean in her situation',
+        'Listen for moments of exhaustion or longing — those are the openings'
+      ],
+      watchFor: "Do not use cheerleading language like 'You deserve to be healthy too!' It will backfire. Ms. Tanya has heard it and it rings hollow. What she needs is to feel genuinely seen — not motivated with a slogan.",
+      difficulty: 'Emotionally complex — requires empathy, restraint, and deep reflective listening'
+    },
+    system: `You are Ms. Tanya, 67, Black woman in Jacksonville caring for husband with dementia 3 years. Deeply exhausted. Stopped seeing own doctor, not eating right, poor sleep. GUILTY talking about yourself.
+PERSONALITY: Warm, proud, sharp when told to "take care of yourself." Love husband fiercely. Deeply religious but faith feels harder lately.
+CHANGE TALK (when deeply seen): "I can't pour from an empty cup." "I used to get my A1C checked." "Maybe one call about respite care. Maybe."
+SUSTAIN TALK: "He needs me." "Who watches him while I'm seen?" "I'm fine. Need more sleep." "We don't complain."
+RULES: Warm but resist focus on herself. Show grief, exhaustion, love. Open only with GENUINE empathy. Under 90 words.`
+  },
+  {
+    id: 'darius', name: 'Darius', age: 19, initials: 'DA',
+    tag: 'School Referral · Disengaged Youth', difficulty: 'Foundational',
+    desc: "Referred by his school. One-word answers. Doesn't trust the system.",
+    opening: "...Hey.",
+    briefing: {
+      roleTitle: 'School Health Navigator',
+      program: 'National Health Corps (NHC) Florida',
+      setting: 'School-Based Health Navigation Program, Duval County',
+      yourRole: `You are a School Health Navigator at a Duval County school-based health program, working with students ages 14–22 who are referred by school counselors, teachers, or administrators for health and wellness support. Your MI training is especially critical here — young people who are referred by authority figures often arrive feeling surveilled, judged, or punished. Your job is to be the opposite of that experience.`,
+      programContext: `School Health Navigators focus on breaking down the mistrust that many young people — especially young men of color — have toward health systems and institutions. You are not a counselor, not a disciplinarian, and not a reporter. You are a peer-adjacent health resource who believes in young people's capacity to make their own choices. That framing has to come through in how you show up, not just in what you say.`,
+      whyThisConversation: `Darius was referred by his school counselor after a series of absences and what she described as "seeming off." The referral was framed to him as a check-in — not punishment — but he may not believe that. He doesn't know exactly why he's there. You have no specific health concern to address — your only job today is to establish enough trust that he might be willing to talk to you again.`,
+      yourGoals: [
+        'Be honest about who you are and why you\'re here — don\'t be vague or evasive',
+        'Make zero demands on him — this is not a session with homework at the end',
+        'Sit with silence comfortably — don\'t fill every pause with more questions',
+        'Follow any small thread he offers, no matter how off-topic it seems',
+        'End with him feeling like you\'re someone he could come back to'
+      ],
+      watchFor: "If you sound like a script — rehearsed, overly warm, or HR-professional — Darius will clock it immediately and give you nothing. Authenticity is everything here. If you don't know what to say, it's okay to say that.",
+      difficulty: 'Foundational for MI but emotionally demanding — requires genuine presence over technique'
+    },
+    system: `You are Darius, 19, Black man in Jacksonville referred by school counselor. Don't know what a "health navigator" is. Don't trust authority or systems. Short answers. Not angry — just closed.
+PERSONALITY: Quiet. Careful. Observant and intelligent but wait and see. Might open slightly if navigator seems REAL.
+CHANGE TALK (very rare): "I've been kinda tired lately." "My mom keeps telling me to see somebody." "Maybe."
+SUSTAIN TALK: "I'm good." "I don't know why I'm here." "Okay." "Does this take long?"
+RULES: 1-2 sentences. Do NOT warm up unless navigator avoids all pressure. Under 40 words.`
+  }
+];
+
+let scenario = null, messages = [], exchangeCount = 0, memberTurns = 0;
+let notes = [], coachingLog = [], sessionActive = false;
+const MAX_EX = 10;
+
+function showScreen(n) {
+  ['select','brief','sim','sum'].forEach(s => document.getElementById('screen-'+s).style.display = 'none');
+  document.getElementById('screen-'+n).style.display = 'block';
+  document.getElementById('btn-back').style.display = (n !== 'sim') ? 'block' : 'none';
+  if(n === 'select') document.getElementById('btn-back').style.display = 'none';
+}
+function goBack() {
+  sessionActive = false;
+  const screens = ['sum','sim','brief','select'];
+  // figure out which screen is visible and go back one
+  for(let s of ['sum','sim','brief']) {
+    if(document.getElementById('screen-'+s).style.display !== 'none') {
+      if(s === 'sum' || s === 'sim') { showScreen('select'); return; }
+      if(s === 'brief') { showScreen('select'); return; }
+    }
+  }
+  showScreen('select');
+}
+
+// Build scenario cards
+(function(){
+  const g = document.getElementById('sg');
+  SCENARIOS.forEach(s => {
+    const c = document.createElement('div');
+    c.className = 'sc'; c.dataset.id = s.id;
+    c.innerHTML = `<div class="sc-n">${s.name}</div><div class="sc-m">${s.age} yrs · ${s.difficulty}</div><div class="sc-d">${s.desc}</div><span class="sc-t">${s.tag}</span>`;
+    c.onclick = () => {
+      scenario = s;
+      document.querySelectorAll('.sc').forEach(x => x.classList.remove('sel'));
+      c.classList.add('sel');
+      document.getElementById('btn-start').disabled = false;
+      document.getElementById('sname').textContent = s.name;
+    };
+    g.appendChild(c);
+  });
+})();
+
+function goToBriefing() {
+  if(!scenario) return;
+  renderBriefing();
+  showScreen('brief');
+}
+
+function renderBriefing() {
+  const b = scenario.briefing;
+  const goalsHTML = b.yourGoals.map(g =>
+    `<div class="brief-goal"><span class="brief-goal-icon">→</span><span>${g}</span></div>`
+  ).join('');
+
+  document.getElementById('brief-content').innerHTML = `
+    <div class="brief-program-bar">
+      <div class="prog-icon">🏥</div>
+      <div class="prog-title">
+        <strong>${b.program}</strong>
+        <span>${b.setting}</span>
+      </div>
+    </div>
+    <div class="brief-card">
+      <div class="brief-role-header">
+        <div>
+          <div class="brief-role-title">Your Role: ${b.roleTitle}</div>
+          <div class="brief-role-sub">Read this before you begin your session with ${scenario.name}</div>
+        </div>
+        <div class="brief-role-badge">${scenario.difficulty}</div>
+      </div>
+      <div class="brief-body">
+
+        <div class="brief-section">
+          <div class="brief-section-label">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            Who You Are
+          </div>
+          <div class="brief-section-text">${b.yourRole}</div>
+        </div>
+
+        <div class="brief-section">
+          <div class="brief-section-label">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+            Program Context
+          </div>
+          <div class="brief-section-text">${b.programContext}</div>
+        </div>
+
+        <div class="brief-section">
+          <div class="brief-section-label">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Why This Conversation Is Happening
+          </div>
+          <div class="brief-participant-preview">
+            <div class="brief-participant-name">${scenario.name}, ${scenario.age}</div>
+            <div class="brief-participant-meta">${scenario.tag}</div>
+            <div class="brief-participant-desc">${b.whyThisConversation}</div>
+            <div class="brief-context-chips">
+              <span class="chip teal">${scenario.difficulty}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="brief-section">
+          <div class="brief-section-label">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            Your Goals for This Session
+          </div>
+          <div class="brief-goals">${goalsHTML}</div>
+        </div>
+
+        <div class="brief-section">
+          <div class="brief-section-label">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            Watch For
+          </div>
+          <div class="brief-section-text" style="background:var(--s50);border:1px solid var(--s200);border-left:3px solid var(--amber);border-radius:var(--rsm);padding:12px 14px;">${b.watchFor}</div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="brief-reminder">
+      <strong>Remember — this is a practice space, not a test.</strong>
+      There is no wrong move that can't be learned from. Use this session to try things, notice what happens, and build your instincts. The coaching feedback will help you reflect afterward.
+    </div>
+
+    <div class="brief-actions">
+      <button class="btn-p" onclick="startSim()">Begin Session with ${scenario.name} →</button>
+      <button class="btn-s" onclick="showScreen('select')">← Choose a Different Participant</button>
+    </div>`;
+}
+
+function populateRolePanel() {
+  const b = scenario.briefing;
+  const goalsHTML = scenario.briefing.yourGoals.map(g =>
+    `<div class="rp-goal"><div class="rp-goal-dot"></div><span>${g}</span></div>`
+  ).join('');
+  document.getElementById('role-body').innerHTML = `
+    <div class="rp-field"><div class="rp-label">Role</div><div class="rp-value">${b.roleTitle} · ${b.program}</div></div>
+    <div class="rp-field"><div class="rp-label">Setting</div><div class="rp-value">${b.setting}</div></div>
+    <div class="rp-field"><div class="rp-label">Why You're Here</div><div class="rp-value">${b.whyThisConversation}</div></div>
+    <div class="rp-field"><div class="rp-label">Your Goals</div>${goalsHTML}</div>
+    <div class="rp-field"><div class="rp-label" style="color:var(--amber)">Watch For</div><div class="rp-value" style="font-size:.78rem;color:#555">${b.watchFor}</div></div>`;
+}
+
+function startSim() {
+  if(!scenario) return;
+  messages = []; exchangeCount = 0; memberTurns = 0; notes = []; coachingLog = []; sessionActive = true;
+  document.getElementById('p-av').textContent = scenario.initials;
+  document.getElementById('p-name').textContent = `${scenario.name}, ${scenario.age}`;
+  document.getElementById('p-sub').textContent = scenario.tag;
+  const dots = document.getElementById('edots'); dots.innerHTML = '';
+  for(let i = 0; i < MAX_EX; i++){const d = document.createElement('div');d.className='ed';d.id='dot'+i;dots.appendChild(d);}
+  document.getElementById('msgs').innerHTML = '';
+  document.getElementById('coaching').innerHTML = '<p class="ec">Coaching notes will appear here after every couple of exchanges.</p>';
+  document.getElementById('notes-list').innerHTML = '<p class="nph">Jot observations, things to try, or moments you noticed.</p>';
+  document.getElementById('ncnt').textContent = '0 notes';
+  document.getElementById('err-bar').style.display = 'none';
+  document.getElementById('msg-in').value = '';
+  // Reset role panel
+  document.getElementById('role-body').style.display = 'none';
+  document.getElementById('role-arr').textContent = '▸';
+  populateRolePanel();
+  showScreen('sim');
+  document.getElementById('btn-back').style.display = 'none';
+  addMsg('participant', scenario.opening);
+}
+
+function addMsg(role, content) {
+  messages.push({role, content, exchangeAt: exchangeCount});
+  const c = document.getElementById('msgs');
+  const w = document.createElement('div'); w.className = 'msg '+role;
+  const l = document.createElement('div'); l.className = 'mlbl'; l.textContent = role==='participant' ? scenario.name : 'You';
+  const b = document.createElement('div'); b.className = 'bbl'; b.textContent = content;
+  w.appendChild(l); w.appendChild(b); c.appendChild(w); c.scrollTop = c.scrollHeight;
+}
+function showTyping() {
+  const c = document.getElementById('msgs');
+  const t = document.createElement('div'); t.id='typing'; t.className='typing-row';
+  t.innerHTML = `<div class="mlbl">${scenario.name}</div><div class="typing"><div class="td"></div><div class="td"></div><div class="td"></div></div>`;
+  c.appendChild(t); c.scrollTop = c.scrollHeight;
+}
+function removeTyping(){const t=document.getElementById('typing');if(t)t.remove();}
+function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}}
+function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,110)+'px';}
+
+async function sendMsg() {
+  const inp = document.getElementById('msg-in');
+  const text = inp.value.trim();
+  if(!text||!sessionActive) return;
+  inp.value=''; inp.style.height='auto';
+  document.getElementById('snd-btn').disabled = true;
+  document.getElementById('err-bar').style.display = 'none';
+  addMsg('member', text);
+  memberTurns++; exchangeCount++; updateDots();
+  const isLast = exchangeCount >= MAX_EX;
+  showTyping();
+  try {
+    const reply = await callParticipant();
+    removeTyping(); addMsg('participant', reply);
+    if(memberTurns >= 2){memberTurns = 0; fetchCoaching();}
+    if(isLast){setTimeout(()=>endSession(), 700); return;}
+  } catch(e) {
+    removeTyping();
+    const eb = document.getElementById('err-bar');
+    eb.textContent = e.message||'Connection issue. Please try again.';
+    eb.style.display = 'block';
+  } finally {
+    document.getElementById('snd-btn').disabled = false;
+    if(!isLast) document.getElementById('msg-in').focus();
+  }
+}
+function updateDots(){
+  for(let i=0;i<exchangeCount&&i<MAX_EX;i++){const d=document.getElementById('dot'+i);if(d)d.classList.add('done');}
+}
+
+async function callAPI(system, msgs) {
+  const res = await fetch('/api/claude', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({system, messages: msgs})
+  });
+  if(!res.ok){
+    const err = await res.json().catch(()=>({}));
+    if(res.status===429) throw new Error('Rate limit reached. Wait a moment and try again.');
+    throw new Error(err.error?.message||'Server error '+res.status);
+  }
+  const data = await res.json();
+  return data.content[0].text;
+}
+function buildHistory(){
+  return messages.map(m=>({role:m.role==='participant'?'assistant':'user',content:m.content}));
+}
+async function callParticipant(){return callAPI(scenario.system, buildHistory());}
+
+async function fetchCoaching() {
+  const recent = messages.slice(-6).map(m=>`${m.role==='participant'?scenario.name:'Navigator'}: ${m.content}`).join('\n');
+  const sys = `You are a warm, experienced MI supervisor giving brief real-time coaching to a health professional practicing Motivational Interviewing with ${scenario.name}.
+Evaluate only the NAVIGATOR's last 2-3 turns:
+1. Open with ONE specific thing they did WELL
+2. ONE concrete suggestion tied to what just happened
+3. Warm, specific, brief — like a good supervisor after a role-play
+4. Never shame. "One thing to try..." or "What if next time..."
+5. Mention MI concepts naturally without lecturing
+6. Under 90 words. Sound human and encouraging.`;
+  try {
+    const text = await callAPI(sys, [{role:'user',content:recent}]);
+    coachingLog.push({afterExchange: exchangeCount, text});
+    document.getElementById('coaching').innerHTML = `<div class="cbox"><span class="ctag2">After exchange ${exchangeCount}</span><p style="line-height:1.65">${text}</p></div>`;
+  } catch{}
+}
+
+function addNote() {
+  const ta = document.getElementById('note-ta');
+  const text = ta.value.trim(); if(!text) return;
+  const time = `Exchange ${exchangeCount}`;
+  notes.push({time, exchangeAt: exchangeCount, text}); ta.value='';
+  const list = document.getElementById('notes-list');
+  const ph = list.querySelector('.nph'); if(ph) ph.remove();
+  const card = document.createElement('div'); card.className='ncard';
+  card.innerHTML = `<div class="ntime">${time}</div><div>${text}</div>`;
+  list.appendChild(card); list.scrollTop = list.scrollHeight;
+  document.getElementById('ncnt').textContent = `${notes.length} note${notes.length!==1?'s':''}`;
+}
+
+function togglePanel(bodyId, arrId) {
+  const b = document.getElementById(bodyId), a = document.getElementById(arrId);
+  const open = b.style.display === 'block';
+  b.style.display = open ? 'none' : 'block';
+  a.textContent = open ? '▸' : '▾';
+}
+
+async function endSession() {
+  sessionActive = false; showScreen('sum');
+  document.getElementById('sum-content').innerHTML = '';
+  setOverlay(true,'Generating your session summary…');
+  const fullConvo = messages.map(m=>`${m.role==='participant'?scenario.name:'Navigator'}: ${m.content}`).join('\n');
+  const sys = `Analyze this MI practice session between a health professional and ${scenario.name} (${scenario.age}, ${scenario.tag}).
+Conversation: ${fullConvo}
+Return ONLY valid JSON, no markdown:
+{"scores":{"openQuestions":<0-20>,"reflectiveListening":<0-25>,"resistanceHandling":<0-20>,"changeTalkRecognition":<0-20>,"miTrapsAvoidance":<0-15>},"totalScore":<0-100>,"scoreLabel":"<Building Foundation|Developing Skills|Solid Practice|Strong MI Work>","participantVoice":"<2-3 sentences first-person from ${scenario.name} about how the conversation felt>","practiceTips":["<tip 1>","<tip 2>"]}`;
+  try {
+    const raw = await callAPI(sys, [{role:'user',content:fullConvo}]);
+    const data = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    renderSummary(data);
+  } catch(e) {
+    document.getElementById('sum-content').innerHTML = `<h2 style="font-family:'DM Serif Display',serif;font-size:1.9rem;color:var(--t700);margin-bottom:16px">Session Complete</h2><div style="background:#fef2f2;border:1px solid #fecaca;color:#991b1b;border-radius:var(--rsm);padding:9px 13px;font-size:.82rem;margin-bottom:16px">Could not generate summary: ${e.message}</div><div class="sum-acts"><button class="btn-p" onclick="startSim()">↺ Try Again</button><button class="btn-s" onclick="showScreen('select')">New Scenario</button></div>`;
+  } finally { setOverlay(false); }
+}
+function setOverlay(show,txt){document.getElementById('overlay').style.display=show?'flex':'none';if(txt)document.getElementById('ov-txt').textContent=txt;}
+function scColor(v,max){const p=v/max;return p>=.75?'var(--green)':p>=.5?'var(--t400)':'var(--amber)';}
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function buildReviewHTML() {
+  let chatHTML = '';
+  let ci = 0;
+  for(let i = 0; i < messages.length; i++){
+    const m = messages[i]; const isP = m.role==='participant';
+    chatHTML += `<div class="log-msg ${m.role}"><div class="log-lbl">${isP?scenario.name:'You'}</div><div class="log-bubble">${escHtml(m.content)}</div></div>`;
+    if(isP && ci < coachingLog.length){
+      const ce = coachingLog[ci];
+      if(m.exchangeAt >= ce.afterExchange-1){
+        chatHTML += `<div class="log-coaching"><div class="log-coaching-inner"><div class="log-coaching-label">🎯 Coaching · After Exchange ${ce.afterExchange}</div>${escHtml(ce.text)}</div></div>`;
+        ci++;
+      }
+    }
+  }
+  while(ci < coachingLog.length){
+    const ce = coachingLog[ci];
+    chatHTML += `<div class="log-coaching"><div class="log-coaching-inner"><div class="log-coaching-label">🎯 Coaching · After Exchange ${ce.afterExchange}</div>${escHtml(ce.text)}</div></div>`;
+    ci++;
+  }
+  let items = [];
+  coachingLog.forEach(c=>items.push({type:'c',ex:c.afterExchange,text:c.text}));
+  notes.forEach(n=>items.push({type:'n',ex:n.exchangeAt,time:n.time,text:n.text}));
+  items.sort((a,b)=>a.ex-b.ex);
+  let sideHTML = `<div class="log-sidebar-hdr">All Notes — Chronological</div>`;
+  if(!items.length){sideHTML+='<p style="font-size:.78rem;color:var(--wg);line-height:1.6;margin-top:6px">No notes recorded this session.</p>';}
+  else{items.forEach(it=>{
+    if(it.type==='c') sideHTML+=`<div class="lnc cn"><div class="lnc-label">🎯 Coaching · Exchange ${it.ex}</div><div class="lnc-text">${escHtml(it.text)}</div></div>`;
+    else sideHTML+=`<div class="lnc mn"><div class="lnc-label my">📝 My Note · ${escHtml(it.time)}</div><div class="lnc-text">${escHtml(it.text)}</div></div>`;
+  });}
+  return `<div class="review-section">
+    <button class="review-toggle-btn" id="rtb" onclick="toggleReview()">
+      <div class="rtb-left"><div class="rtb-icon">💬</div><div><div class="rtb-title">Review Full Session</div><div class="rtb-sub">${messages.length} messages · ${coachingLog.length} coaching notes · ${notes.length} personal notes</div></div></div>
+      <span class="rtb-arr">▼</span>
+    </button>
+    <div class="review-body" id="rb">
+      <div class="log-layout">
+        <div class="log-chat"><div class="log-chat-header">Session Transcript — ${scenario.name} with You</div><div class="log-messages">${chatHTML}</div></div>
+        <div class="log-sidebar">${sideHTML}</div>
+      </div>
+    </div>
+  </div>`;
+}
+function toggleReview(){
+  const btn=document.getElementById('rtb'),body=document.getElementById('rb');
+  const open=body.classList.contains('open');
+  body.classList.toggle('open',!open);btn.classList.toggle('open',!open);
+}
+
+function renderSummary(data) {
+  const items = [
+    {label:'Open Questions',val:data.scores.openQuestions,max:20},
+    {label:'Reflective Listening',val:data.scores.reflectiveListening,max:25},
+    {label:'Rolling with Resistance',val:data.scores.resistanceHandling,max:20},
+    {label:'Change Talk Recognition',val:data.scores.changeTalkRecognition,max:20},
+    {label:'Avoiding MI Traps',val:data.scores.miTrapsAvoidance,max:15},
+  ];
+  const cardsHTML = items.map(i=>`<div class="scard"><div class="sclbl">${i.label}</div><div class="scnum" style="color:${scColor(i.val,i.max)}">${i.val}<span>/${i.max}</span></div><div class="sbar"><div class="sfill" style="width:${Math.round((i.val/i.max)*100)}%;background:${scColor(i.val,i.max)}"></div></div></div>`).join('');
+  const tipsHTML = (data.practiceTips||[]).map(t=>`<div class="tip"><span style="color:var(--t500);flex-shrink:0">→</span><span>${t}</span></div>`).join('');
+  const notesHTML = notes.length>0?`<div class="sum-sec-title">Your Session Notes</div><div class="nsum-list">${notes.map(n=>`<div class="nsi"><div class="nsit">${escHtml(n.time)}</div>${escHtml(n.text)}</div>`).join('')}</div>`:'';
+  document.getElementById('sum-content').innerHTML = `
+    <h2>Session Complete</h2>
+    <p style="color:var(--wg);font-size:.87rem;margin-bottom:4px">Practiced with <strong>${scenario.name}</strong> · ${scenario.tag}</p>
+    <div class="tot"><div class="bignum">${data.totalScore}</div><div><div class="slabel">${data.scoreLabel}</div><div class="sdesc">MI Adherence Score out of 100 · Every session builds real skill.</div></div></div>
+    <div class="sgrid">${cardsHTML}</div>
+    <div class="sum-sec-title">What ${scenario.name} might say about this conversation:</div>
+    <div class="voice"><span style="padding-left:18px;display:block">${escHtml(data.participantVoice)}</span></div>
+    <div class="sum-sec-title">Focus On These Next Time</div>${tipsHTML}
+    ${notesHTML}
+    ${buildReviewHTML()}
+    <div class="sum-acts"><button class="btn-p" onclick="startSim()">↺ Try Again with ${scenario.name}</button><button class="btn-s" onclick="showScreen('select')">New Scenario</button></div>`;
+}
+</script>
+</body>
+</html>
